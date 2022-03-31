@@ -1,47 +1,47 @@
 import React from 'react';
-import { useSnapshot } from 'valtio';
-import _ from './store/store';
+
 import { init } from 'commandbar';
 import { useNavigate } from 'react-router-dom';
+import { useSnapshot } from 'valtio';
+import _ from './store/store';
 import { editCompanyDetails } from './store/actions';
 
-init('a0ad6b4d');
+init('c6396d27');
 
 const useCommandBar = () => {
   const snapshot = useSnapshot(_);
+  const loggedInUserId = '424242';
+  window.CommandBar.boot(loggedInUserId);
+
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    window.CommandBar.boot('424242');
+    function router(url: string) {
+      navigate(url);
+    }
 
-    // add callback for changing company state
-    const updateCompanyStage = (args: any, context: any) => {
-      editCompanyDetails(context.activeLead.id, 'stageId', args.stage.id);
-    };
-    window.CommandBar.addCallback('editCompanyStage', updateCompanyStage);
-  }, []);
-
-  // add router
-  React.useEffect(() => {
-    // add router for quick navigation
-    const routerFunc = (newUrl: string) => navigate(newUrl);
-    window.CommandBar.addRouter(routerFunc);
+    window.CommandBar.addRouter(router);
   }, [navigate]);
 
-  // add companies to context (and subscribe to changes)
   React.useEffect(() => {
     window.CommandBar.addContext('leads', snapshot.companies);
   }, [snapshot.companies]);
 
-  // add stages to context (and subscribe to changes, though none are made in this demo)
   React.useEffect(() => {
     window.CommandBar.addContext('stages', snapshot.stages);
-  }, [snapshot.stages]);
+  }, [snapshot.companies]);
 
-  // add active company to context (and subscribe to changes)
   React.useEffect(() => {
     window.CommandBar.addContext('activeLead', snapshot.activeCompany);
   }, [snapshot.activeCompany]);
+
+  React.useEffect(() => {
+    window.CommandBar.addCallback('updateLeadStatus', (args: any, context: any) => {
+      const companyId = context.activeLead.id;
+      const newStageId = args.stageId.id;
+      editCompanyDetails(companyId, 'stageId', newStageId);
+    });
+  }, []);
 };
 
 export default useCommandBar;
