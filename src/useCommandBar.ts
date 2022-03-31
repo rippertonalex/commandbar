@@ -29,7 +29,7 @@ const useCommandBar = () => {
 
   React.useEffect(() => {
     window.CommandBar.addContext('stages', snapshot.stages);
-  }, [snapshot.companies]);
+  }, [snapshot.stages]);
 
   React.useEffect(() => {
     window.CommandBar.addContext('activeLead', snapshot.activeCompany);
