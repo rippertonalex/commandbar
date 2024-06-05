@@ -10,14 +10,14 @@ init('c6396d27');
 
 //navigate commands can be set up in the CommandBar GUI
 
-// useCommandBar is the main functional component
+// useCommandBar is the main functional component of this file
 // vlatio is a state management library. It automatically updates the UI when the state changes.
 // snapshot is a snapshot of the current state to get info like leads stages etc
-// use navigate is a hook to route within the application
+// usenavigate is a hook to route within the application
 const useCommandBar = () => {
   const snapshot = useSnapshot(_);  // gives access to our gloabl store
   const loggedInUserId = '424242';
-  // boot command is what makes it visable to a user
+  // boot command is what makes commandbar visable to a user
   window.CommandBar.boot(loggedInUserId);
 
   // to prevent browser reloding when navigating we want to hook up
