@@ -1,6 +1,7 @@
 // To access information from the store in a read only way (e.g., rendering or for CommandBar)
 // useSnapshot(store).x
 
+// this is esssentially our global store
 import { proxy } from 'valtio';
 import companies from './data/companies';
 import stages from './data/stages';
