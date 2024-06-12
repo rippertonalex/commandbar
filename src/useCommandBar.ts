@@ -1,67 +1,115 @@
-import React from 'react';
-
 import { init } from 'commandbar';
-import { useNavigate } from 'react-router-dom';
-import { useSnapshot } from 'valtio';
-import _ from './store/store';
-import { editCompanyDetails } from './store/actions';
 
-init('c6396d27');
+// Initialize CommandBar with the provided key
+init('2789cb70');
 
-//navigate commands can be set up in the CommandBar GUI
+// Export the triggerNudge function for tracking button clicks
+export function triggerNudge() {
+  window.CommandBar.trackEvent('jim_halpert_button', {});
+  return;
+}
 
-// useCommandBar is the main functional component of this file
-// vlatio is a state management library. It automatically updates the UI when the state changes.
-// snapshot is a snapshot of the current state to get info like leads stages etc
-// usenavigate is a hook to route within the application
+// Main functional component to set up CommandBar
 const useCommandBar = () => {
-  const snapshot = useSnapshot(_);  // gives access to our gloabl store
   const loggedInUserId = '424242';
-  // boot command is what makes commandbar visable to a user
+
+  // Boot CommandBar for the logged in user
   window.CommandBar.boot(loggedInUserId);
 
-  // to prevent browser reloding when navigating we want to hook up
-  //commandbar to our client side router
-  const navigate = useNavigate();
+  // Add custom component to CommandBar
+  window.CommandBar.addComponent('record-preview-with-image', 'Basic Record Preview with an image', {
+    mount: (elem: HTMLElement) => ({
+      render: (
+        data: { label: string; id: string; good_boy_rating: number; photo: string; email: string },
+        metadata: any,
+      ) => {
+        elem.innerHTML = `
+          <div style="font-family: Arial, sans-serif; border: 1px solid #ccc; border-radius: 8px; padding: 16px; max-width: 300px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0;">${data.label}</h3>
+            <p><strong>ID:</strong> ${data.id}</p>
+            <p><strong>Email:</strong> <a href="mailto:${data.email}" style="color: #007BFF; text-decoration: none;">${data.email}</a></p>
+            <p><strong>Good Boy Rating:</strong> ${data.good_boy_rating}/10</p>
+            <input type="range" id="goodBoyRating-${data.id}" name="goodBoyRating" min="0" max="10" value="${data.good_boy_rating}" disabled style="width: 100%;">
+            <div style="margin-top: 16px; text-align: center;">
+              <img src="${data.photo}" alt="${data.label}" style="max-width: 100%; height: auto; border-radius: 8px;"/>
+            </div>
+          </div>`;
+      },
+      unmount: (elem: HTMLElement) => {
+        // Clean up any timers, event handlers, etc.
+      },
+    }),
+  });
 
-  // useEffect is used to run side effects in the component
-  React.useEffect(() => {
-    // takes in url to client side route to that URL
-    function router(url: string) {
-      navigate(url);
+  // Add records to CommandBar
+  window.CommandBar.addRecords(
+    'pets',
+    [
+      {
+        label: 'Fido',
+        id: 'foo42',
+        good_boy_rating: 9,
+        email: 'fido12@yahoo.com',
+        photo: 'https://i.ytimg.com/vi/SfLV8hD7zX4/maxresdefault.jpg',
+      },
+      {
+        label: 'Buster',
+        id: 'bar43',
+        email: 'buster123@gmail.com',
+        good_boy_rating: 6,
+        photo: 'https://i.ytimg.com/vi/C_lpU5DiJ0Y/maxresdefault.jpg',
+      },
+      {
+        label: 'Brutus',
+        id: 'baz44',
+        email: 'bigbrutus12@gmail.com',
+        good_boy_rating: 8,
+        photo: 'http://cdn.akc.org/content/article-body-image/housetrain_adult_dog_hero.jpg',
+      },
+    ],
+    { detail: { type: 'component', value: 'record-preview-with-image' } },
+  );
+
+  // Add record action with dynamic photo URL
+  window.CommandBar.addRecordAction('pets', {
+    text: 'view pets',
+    name: 'view-pets',
+    template: {
+      type: 'link',
+      value: '{{record.photo}}',
+      operation: 'self', // how should the page open
+    },
+  });
+
+  // Function to fetch cat facts from the API
+  const onSearchCatFacts = async () => {
+    try {
+      const response = await fetch('https://catfact.ninja/fact');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Fetching cat fact failed:', error);
+      return { fact: 'Could not fetch a cat fact at this time.' };
     }
+  };
 
-    window.CommandBar.addRouter(router);
-  }, [navigate]);  // dependency array showing how router is dependent on navigate
+  // Add argument choices for cat facts
+  window.CommandBar.addArgumentChoices('cat-api', [], {
+    onInputChange: async () => {
+      const data = await onSearchCatFacts();
+      return [{ name: 'Cat Fact', value: data.fact }];
+    },
+  });
 
-  //There are two ways to make things searchable in commandbar
-  // 1. client side: data that is loaded on the client side can be made searchable
-  // 2. server side: data that is loaded on the server side can be made searchable by hitting a backend api endpoint
+  // Add callback to display cat fact
+  window.CommandBar.addCallback('sayHi', async () => {
+    const catFactResponse = await onSearchCatFacts();
+    alert(`Here is a silly little cat fact from Jim Halpert, ${catFactResponse.fact}`);
+  });
 
-  // this effect runs when the snapshot.companies changes
-  //  It adds a context to CommandBar with the key 'leads' and the value of snapshot.companies
-  React.useEffect(() => {
-    window.CommandBar.addContext('leads', snapshot.companies);
-  }, [snapshot.companies]);  // runs whenever snapshot.companies changes
-
-  React.useEffect(() => {
-    window.CommandBar.addContext('stages', snapshot.stages);
-  }, [snapshot.stages]);
-
-  React.useEffect(() => {
-    window.CommandBar.addContext('activeLead', snapshot.activeCompany);
-  }, [snapshot.activeCompany]);
-
-  // the empty dependency array means that this effect runs only once when the component is rendered
-  // the editCompanyDetails function is defined in our actions to update any company details
-  // the context argument here is all of the context that commandbar has access to
-  React.useEffect(() => {
-    window.CommandBar.addCallback('updateLeadStatus', (args: any, context: any) => {
-      const companyId = context.activeLead.id;
-      const newStageId = args.stageId.id;  // the args are defined in the function that is created in the GUI
-      editCompanyDetails(companyId, 'stageId', newStageId);
-    });
-  }, []);
+  // Additional functionality (contexts, other callbacks, etc.) can be added below
 };
 
 export default useCommandBar;

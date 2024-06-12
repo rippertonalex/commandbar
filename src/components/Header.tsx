@@ -3,6 +3,7 @@ import { SearchIcon } from '@heroicons/react/solid';
 import { Dispatch, SetStateAction } from 'react';
 import { useSnapshot } from 'valtio';
 import _ from '../store/store';
+import { triggerNudge } from '../useCommandBar';
 
 export default function Header({ setSidebarOpen }: { setSidebarOpen: Dispatch<SetStateAction<boolean>> }) {
   const { currentUser } = useSnapshot(_);
@@ -39,6 +40,7 @@ export default function Header({ setSidebarOpen }: { setSidebarOpen: Dispatch<Se
           <button
             type="button"
             className="inline-flex items-center p-1 text-white bg-indigo-600 hover:bg-indigo-700 rounded-full border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm"
+            onClick={triggerNudge}
           >
             <img className="w-8 h-8 rounded-full" src={currentUser.imgURL} alt="" />
           </button>
